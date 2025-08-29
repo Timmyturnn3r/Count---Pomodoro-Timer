@@ -43,7 +43,8 @@ body.dark-mode .header {
 body.dark-mode .step-card,
 body.dark-mode .feature-card,
 body.dark-mode .setting-item, 
-body.dark-mode .timer-circle {
+body.dark-mode .timer-circle,
+body.dark-mode .achievement-card {
   background-color: #2d2d2d;
   border: 1px solid #404040;
 }
@@ -56,7 +57,8 @@ body.dark-mode .app-name,
 body.dark-mode .step-title,
 body.dark-mode .feature-info h3,
 body.dark-mode .setting-details h3,
-body.dark-mode .timer-display {
+body.dark-mode .timer-display,
+body.dark-mode .achievement-title {
   color: #e0e0e0;
 }
 
@@ -64,7 +66,11 @@ body.dark-mode .step-description,
 body.dark-mode .feature-info p,
 body.dark-mode .setting-details p,
 body.dark-mode .input-group label,
-body.dark-mode .timer-status {
+body.dark-mode .timer-status,
+body.dark-mode .timer-labels,
+body.dark-mode .control-label,
+body.dark-mode .achievement-description,
+body.dark-mode .achievement-stats {
   color: #b0b0b0;
 }
 
@@ -394,6 +400,15 @@ body.dark-mode .time-input:focus {
   font-family: 'Courier New', monospace;
 }
 
+.timer-labels {
+  font-size: 12px;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
 .timer-status {
   color: #6c757d;
   font-size: 16px;
@@ -403,6 +418,14 @@ body.dark-mode .time-input:focus {
 .timer-controls {
   display: flex;
   gap: 16px;
+  align-items: center;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .control-btn {
@@ -429,6 +452,67 @@ body.dark-mode .time-input:focus {
 
 .control-btn:hover {
   transform: scale(1.1);
+}
+
+.control-label {
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.achievement-section {
+  margin-top: 32px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.achievement-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e9ecef;
+  align-items: center;
+}
+
+.achievement-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.achievement-description {
+  color: #6c757d;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.achievement-stats {
+  display: flex;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 24px;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 24px;
+  font-weight: 600;
+  color: #e60606;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .settings-page {
@@ -533,7 +617,7 @@ body.dark-mode .time-input:focus {
   .steps-section {
     grid-template-columns: 1fr;
   }
-  .templates-grid {
+  .features-grid {
     grid-template-columns: 1fr;
   }
   .timer-circle {
@@ -543,6 +627,9 @@ body.dark-mode .time-input:focus {
   .timer-display {
     font-size: 36px;
   }
+  .achievement-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }  
 }
 
 @media (max-width: 480px) {
@@ -556,5 +643,8 @@ body.dark-mode .time-input:focus {
   .control-btn {
     width: 50px;
     height: 50px;
+  }
+  .achievement-stats {
+    grid-template-columns: 1fr;
   }
 }

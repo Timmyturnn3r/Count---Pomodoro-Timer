@@ -9,16 +9,19 @@ class CountTimer {
     this.breakDuration = 5;
     this.timer = null;
     this.currentTask = '';
+    this.sessions = this.loadSessions();
 
     this.initializeElements();
     this.initializeEventListeners();
     this.updateDisplay();
+    this.updateAchievements();
   }
 
   initializeElements() {
     this.timerDisplay = document.getElementById('timerDisplay');
     this.timerStatus = document.getElementById('timerStatus');
     this.playBtn = document.getElementById('playBtn');
+    this.playLabel = document.getElementById('playLabel');
     this.stopBtn = document.getElementById('stopBtn');
     this.addTaskBtn = document.getElementById('addTaskBtn');
     this.workInput = document.getElementById('workInput');
@@ -27,12 +30,21 @@ class CountTimer {
     this.mainContent = document.getElementById('mainContent');
     this.mobileToggle = document.getElementById('mobileToggle');
     this.darkModeToggle = document.getElementById('darkModeToggle');
+    this.resetDataBtn = document.getElementById('resetDataBtn');
+
+    //Achievement elements
+    this.totalSessions = document.getElementById('totalSessions');
+    this.totalWorkTime = document.getElementById('totalWorkTime');
+    this.totalBreakTime = document.getElementById('totalBreakTime');
+    this.streakDays = document.getElementById('streakDays');
   }
+
   initializeEventListeners() {
     // Timer controls
     this.playBtn.addEventListener('click', () => this.toggleTimer());
     this.stopBtn.addEventListener('click', () => this.stopTimer());
     this.addTaskBtn.addEventListener('click', () => this.addTask());
+    this.resetDataBtn.addEventListener('click', () => this.resetData());
 
     // Input field changes
     this.workInput.addEventListener('change', () => this.updateTimerFromInputs());
@@ -65,6 +77,98 @@ class CountTimer {
     });
   }
 
+  loadSessions() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('pomodoroSessions') || '[]');
+      return saved;
+    } catch (e) {
+      console.log('Error loading sessions:', e);
+      return [];
+    }
+  }
+
+  saveSessions() {
+    try {
+      localStorage.setItem('pomodoroSessions', JSON.stringify(this.sessions));
+    } catch (e) {
+      console.log('Error saving sessions:', e);
+    }
+  }
+
+  saveCompletedSession(type, duration, task) {
+    const session = {
+      id: Date.now(),
+      type: type, // 'work' or 'break'
+      duration: duration, // in minutes
+      task: task || 'No task specified',
+      timestamp: new Date().toISOString(),
+      date: new Date().toDateString()
+    };
+
+    this.sessions.push(session);
+    this.saveSessions();
+    this.updateAchievements();
+  }
+
+  updateAchievements() {
+    const workSessions = this.sessions.filter(s => s.type === 'work');
+    const breakSessions = this.sessions.filter(s => s.type === 'break');
+
+    //Total sessions
+    this.totalSessions.textContent = workSessions.length;
+
+    //Total work time in hours
+    const totalWorkMinutes = workSessions.reduce((total, session) => total + session.duration, 0);
+    this.totalWorkTime.textContent = (totalWorkMinutes / 60).toFixed(1);
+
+    //Total break time in hours
+    const totalBreakMinutes = breakSessions.reduce((total, session) => total + session.duration, 0);
+    this.totalBreakTime.textContent = (totalBreakMinutes / 60).toFixed(1);
+
+    //Calculate streak days
+    const streak = this.calculateStreak();
+    this.streakDays.textContent = streak;
+  }
+
+  calculateStreak() {
+    if (this.sessions.length === 0) return 0;
+
+    // Get unique dates with sessions
+    const sessionDates = [...new Set(this.sessions.map(s => s.date))];
+    sessionDates.sort((a, b) => new Date(b) - new Date(a));
+
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+    let streak = 0;
+
+    // Check if there's a session today or yesterday to start the streak
+    if (sessionDates.includes(today) || sessionDates.includes(yesterday)) {
+      let currentDate = sessionDates.includes(today) ? new Date() : new Date(Date.now() - 86400000);
+
+      for (let i = 0; i < sessionDates.length; i++) {
+        const dataString = currentDate.toDateString();
+        if (sessionDates.includes(dataString)) {
+          streak++;
+          currentDate.setDate(currentDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+    }
+
+    return streak;
+  }
+
+  resetData() {
+    if (confirm('Are you sure you want to reset all your data? This action cannot be undone.')) {
+      this.sessions = [];
+      this.saveSessions();
+      this.updateAchievements();
+      alert('All data has been reset successfully.');
+    }
+  }
+
   switchPage(page) {
     // Update nav
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
@@ -86,6 +190,8 @@ class CountTimer {
                 
     this.workDuration = workTime;
     this.breakDuration = breakTime;
+    this.workInput.value = workTime;
+    this.breakInput.value = breakTime;
     this.timeLeft = workTime * 60;
     this.totalTime = workTime * 60;
                 
@@ -143,6 +249,15 @@ class CountTimer {
     this.isRunning = true;
     this.isPaused = false;
     this.timerStatus.textContent = this.isWorkSession ? 'Working...' : 'Break time';
+    this.playLabel.textContent = 'Pause';
+
+    // Update play button icon to pause
+    this.playBtn.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <rect x="6" y="4" width="4" height="16"/>
+        <rect x="14" y="4" width="4" height="16"/>
+      </svg>
+    `;
                 
     this.timer = setInterval(() => {
       this.timeLeft--;
@@ -159,6 +274,14 @@ class CountTimer {
     this.isPaused = true;
     clearInterval(this.timer);
     this.timerStatus.textContent = 'Paused';
+    this.playLabel.textContent = 'Play';
+
+    // Update pause button icon back to play
+    this.playBtn.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <polygon points="5,3 19,12 5,21"/>
+      </svg>
+    `;
 
     // Start break countdown when paused
     this.startBreakCountdown();
@@ -210,6 +333,14 @@ class CountTimer {
     this.isRunning = false;
     this.isPaused = false;
     clearInterval(this.timer);
+    this.playLabel.textContent = 'Play';
+
+    // Reset play button icon
+    this.playBtn.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <polygon points="5,3 19,12 5,21"/>
+      </svg>
+    `;
                 
     if (this.isWorkSession) {
       this.timeLeft = this.workDuration * 60;
@@ -226,6 +357,21 @@ class CountTimer {
   sessionComplete() {
     this.isRunning = false;
     clearInterval(this.timer);
+    this.playLabel.textContent = 'Play';
+
+    // Reset play button icon
+    this.playBtn.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <polygon points="5,3 19,12 5,21"/>
+      </svg>
+    `;
+
+    // Save completed session
+    if (this.isWorkSession) {
+      this.saveCompletedSession('work', this.workDuration, this.currentTask);
+    } else {
+        this.saveCompletedSession('break', this.breakDuration, this.currentTask);
+    }
                 
     // Play completion sound
     this.playCompletionSound();
@@ -247,7 +393,7 @@ class CountTimer {
                 
     // Show notification
     const message = this.isWorkSession ? 
-      'Break time is over! Ready for another work session?' : 
+      'Break is over! Ready for another work session?' : 
       'Work session complete! Time for a well-deserved break!';
     alert(message);
   }
